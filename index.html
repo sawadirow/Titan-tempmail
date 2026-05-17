@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEMPMAIL - Temporary Email Service</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fb;color:#1a1a2e}
+.header{background:white;border-bottom:1px solid #e2e8f0;padding:20px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);background:rgba(255,255,255,0.95)}
+.header .container{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.logo h1{font-size:24px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo p{font-size:12px;color:#6b7280}
+.nav{display:flex;gap:24px}
+.nav button{background:none;border:none;padding:8px 16px;cursor:pointer;font-weight:500;color:#4b5563;border-radius:8px;transition:all .2s}
+.nav button:hover{background:#f0f0f0;color:#3b82f6}
+.nav .active{background:#3b82f6;color:white}
+.container{max-width:1200px;margin:0 auto;padding:32px 24px}
+.card{background:white;border-radius:20px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #eef2f6;margin-bottom:24px}
+.card h2{font-size:18px;margin-bottom:16px;color:#1f2937}
+input,select{padding:12px 16px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white}
+input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+button{padding:12px 20px;background:#3b82f6;color:white;border:none;border-radius:12px;font-weight:500;cursor:pointer;transition:all .2s}
+button:hover{background:#2563eb;transform:translateY(-1px)}
+button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:16px}
+.item-card{background:#f9fafb;border-radius:16px;padding:16px;border:1px solid #eef2f6;cursor:pointer;transition:all .2s}
+.item-card:hover{border-color:#3b82f6;background:#eff6ff}
+.item-card .value{font-family:monospace;font-size:14px;font-weight:600;color:#1f2937;margin-bottom:8px;word-break:break-all}
+.item-card .meta{font-size:12px;color:#6b7280}
+.messages-area{max-height:500px;overflow-y:auto}
+.message{background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:12px;border-left:3px solid #3b82f6}
+.message .from{font-weight:600;color:#1f2937;margin-bottom:4px}
+.message .subject{font-weight:500;color:#4b5563;margin-bottom:8px}
+.message .body{font-size:14px;color:#6b7280;margin-top:8px;white-space:pre-wrap;word-break:break-word}
+.message .time{font-size:11px;color:#9ca3af;margin-top:8px}
+.flex{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.toast{position:fixed;bottom:24px;right:24px;background:#1f2937;color:white;padding:12px 20px;border-radius:12px;font-size:14px;z-index:1000;animation:slideIn 0.3s ease}
+.toast.error{background:#dc2626}
+.toast.success{background:#10b981}
+@keyframes slideIn{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.badge{background:#e5e7eb;padding:4px 12px;border-radius:20px;font-size:12px;color:#4b5563}
+.delete-btn{background:#dc2626;padding:6px 12px;font-size:12px}
+.delete-btn:hover{background:#b91c1c}
+.sidebar{background:white;border-radius:20px;padding:20px;border:1px solid #eef2f6;margin-bottom:24px}
+.sidebar h3{font-size:16px;margin-bottom:12px;color:#1f2937}
+.email-list{max-height:200px;overflow-y:auto}
+.email-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eef2f6;cursor:pointer}
+.email-item:hover{background:#f9fafb}
+.email-item .email-text{font-size:13px;font-family:monospace;word-break:break-all;flex:1}
+.email-item .delete-small{background:#dc2626;padding:4px 8px;font-size:10px;margin-left:8px}
+.health-status{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.health-online{background:#10b981}
+.health-offline{background:#dc2626}
+@media(max-width:768px){.header .container{flex-direction:column;text-align:center}.grid{grid-template-columns:1fr}.flex-between{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container">
+    <div class="logo">
+      <h1>TEMPMAIL</h1>
+      <p>Temp Email & SMS Service</p>
+    </div>
+    <div class="nav">
+      <button class="active" onclick="showTab('email')">📧 Temp Email</button>
+      <button onclick="showTab('sms')">📱 Temp Numbers</button>
+      <button onclick="showTab('api')">🔑 API Docs</button>
+      <button onclick="showTab('health')">🩺 Health</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Email Tab -->
+  <div id="emailTab" class="tab-content">
+    <div class="sidebar">
+      <div class="flex-between">
+        <h3>📁 Your Emails</h3>
+        <button onclick="loadEmails()" style="padding:6px 12px;font-size:12px">🔄 Refresh</button>
+      </div>
+      <div id="emailList" class="email-list">
+        <div style="text-align:center;padding:20px;color:#9ca3af">No emails yet</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between">
+        <h2>📧 Create Temporary Email</h2>
+        <div class="flex">
+          <input type="text" id="customUsername" placeholder="Username (optional)" style="width:180px">
+          <select id="emailDomain">
+            <option>tempmail.com</option>
+            <option>1secmail.com</option>
+            <option>mailnator.com</option>
+          </select>
+          <button onclick="createEmail()" id="createEmailBtn">✨ Create Email</button>
+        </div>
+      </div>
+      <div id="currentEmailArea" style="margin-top:16px;display:none">
+        <div class="badge" style="background:#dbeafe;color:#1e40af">Current email:</div>
+        <div class="flex-between" style="margin-top:8px">
+          <code id="currentEmail" style="background:#f3f4f6;padding:10px;border-radius:10px;font-size:14px;word-break:break-all;flex:1"></code>
+          <button onclick="copyEmail()" style="background:#6b7280;padding:8px 16px">📋 Copy</button>
+          <button onclick="deleteCurrentEmail()" class="delete-btn" style="padding:8px 16px">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between">
+        <h2>📥 Inbox</h2>
+        <button onclick="refreshInbox()">🔄 Refresh</button>
+      </div>
+      <div id="inboxArea" class="messages-area" style="min-height:300px">
+        <div style="text-align:center;padding:40px;color:#9ca3af">Create an email to see messages</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMS Tab -->
+  <div id="smsTab" class="tab-content" style="display:none">
+    <div class="card">
+      <div class="flex-between">
+        <h2>📱 Temporary Numbers</h2>
+        <button onclick="loadNumbers()">🔄 Refresh Numbers</button>
+      </div>
+      <div id="numbersGrid" class="grid" style="min-height:200px">
+        <div style="text-align:center;padding:40px;color:#9ca3af">Loading numbers...</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>💬 SMS Messages</h2>
+      <select id="selectedNumber" style="width:100%;margin-bottom:16px"><option>Select a number first</option></select>
+      <div id="smsArea" class="messages-area" style="min-height:200px">
+        <div style="text-align:center;padding:40px;color:#9ca3af">Select a number to view SMS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Tab -->
+  <div id="apiTab" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>🔑 API Documentation</h2>
+      <p style="color:#6b7280;margin-bottom:20px">Use our API to integrate temp email & SMS into your projects</p>
+      <div style="background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:16px">
+        <h3 style="margin-bottom:8px">POST /api/temp/email</h3>
+        <pre style="background:#1f2937;color:#e5e7eb;padding:12px;border-radius:8px;overflow-x:auto;font-size:12px">fetch('https://api.tempmail.com/v1/temp/email', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({username:'custom', domain:'tempmail.com'})
+})</pre>
+      </div>
+      <div style="background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:16px">
+        <h3 style="margin-bottom:8px">GET /api/messages?email={email}</h3>
+        <pre style="background:#1f2937;color:#e5e7eb;padding:12px;border-radius:8px;overflow-x:auto;font-size:12px">fetch('https://api.tempmail.com/v1/messages?email=user@tempmail.com')</pre>
+      </div>
+      <div style="background:#f9fafb;border-radius:12px;padding:16px">
+        <h3 style="margin-bottom:8px">DELETE /api/email/delete</h3>
+        <pre style="background:#1f2937;color:#e5e7eb;padding:12px;border-radius:8px;overflow-x:auto;font-size:12px">fetch('https://api.tempmail.com/v1/email/delete', {
+  method: 'DELETE',
+  body: JSON.stringify({email:'user@tempmail.com'})
+})</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Tab -->
+  <div id="healthTab" class="tab-content" style="display:none">
+    <div class="card">
+      <div class="flex-between">
+        <h2>🩺 System Health</h2>
+        <button onclick="checkHealth()">🔄 Check Now</button>
+      </div>
+      <div id="healthStatus" style="margin-top:20px">
+        <div style="text-align:center;padding:40px">Loading system status...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer style="text-align:center;padding:24px;color:#9ca3af;font-size:12px;border-top:1px solid #e2e8f0;margin-top:32px">
+  Developed by <strong>@sadooryu</strong> | Commanded by Lord Zayrou | TEMPMAIL Titan V3.0
+</footer>
+
+<script>
+let currentEmail = null;
+let refreshInterval = null;
+
+function showToast(msg, type) {
+  let existing = document.querySelector('.toast');
+  if(existing) existing.remove();
+  let toast = document.createElement('div');
+  toast.className = `toast ${type || 'success'}`;
+  toast.innerText = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function showTab(tab) {
+  document.getElementById('emailTab').style.display = tab === 'email' ? 'block' : 'none';
+  document.getElementById('smsTab').style.display = tab === 'sms' ? 'block' : 'none';
+  document.getElementById('apiTab').style.display = tab === 'api' ? 'block' : 'none';
+  document.getElementById('healthTab').style.display = tab === 'health' ? 'block' : 'none';
+  let btns = document.querySelectorAll('.nav button');
+  btns.forEach(btn => btn.classList.remove('active'));
+  if(event && event.target) event.target.classList.add('active');
+  if(tab === 'sms') loadNumbers();
+  if(tab === 'health') checkHealth();
+}
+
+async function createEmail() {
+  let btn = document.getElementById('createEmailBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+  let domain = document.getElementById('emailDomain').value;
+  let username = document.getElementById('customUsername').value.trim();
+  
+  let body = { domain };
+  if(username) body.username = username;
+  
+  try {
+    let res = await fetch('/api/temp/email', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    let data = await res.json();
+    if(data.email) {
+      currentEmail = data.email;
+      document.getElementById('customUsername').value = '';
+      document.getElementById('currentEmail').innerText = currentEmail;
+      document.getElementById('currentEmailArea').style.display = 'block';
+      showToast('Email created!', 'success');
+      refreshInbox();
+      loadEmails();
+      if(refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(refreshInbox, 5000);
+    } else if(data.error) {
+      showToast(data.error, 'error');
+    }
+  } catch(e) { showToast('Failed to create email', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Create Email';
+  }
+}
+
+async function refreshInbox() {
+  if(!currentEmail) return;
+  let inbox = document.getElementById('inboxArea');
+  try {
+    let res = await fetch(`/api/messages?email=${encodeURIComponent(currentEmail)}`);
+    let msgs = await res.json();
+    if(!msgs.length) { inbox.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af">No messages yet</div>'; return; }
+    inbox.innerHTML = msgs.map(m => `<div class="message"><div class="from">📧 From: ${escapeHtml(m.from_email||'Unknown')}</div><div class="subject">📝 Subject: ${escapeHtml(m.subject||'No Subject')}</div><div class="body">${escapeHtml(m.body||m.html_body||'No content')}</div><div class="time">🕐 ${new Date(m.received_at).toLocaleString()}</div></div>`).join('');
+  } catch(e) {}
+}
+
+async function loadEmails() {
+  try {
+    let res = await fetch('/api/emails');
+    let emails = await res.json();
+    let container = document.getElementById('emailList');
+    if(!emails.length) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af">No emails yet</div>';
+      return;
+    }
+    container.innerHTML = emails.map(e => `
+      <div class="email-item" onclick="selectEmail('${e.email}')">
+        <span class="email-text">📧 ${e.email}</span>
+        <button class="delete-small" onclick="event.stopPropagation(); deleteEmail('${e.email}')">🗑</button>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+function selectEmail(email) {
+  currentEmail = email;
+  document.getElementById('currentEmail').innerText = currentEmail;
+  document.getElementById('currentEmailArea').style.display = 'block';
+  refreshInbox();
+  showToast(`Switched to ${email}`, 'success');
+}
+
+async function deleteEmail(email) {
+  let res = await fetch('/api/email/delete', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if(res.ok) {
+    showToast('Email deleted', 'success');
+    if(currentEmail === email) {
+      currentEmail = null;
+      document.getElementById('currentEmailArea').style.display = 'none';
+      document.getElementById('inboxArea').innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af">Create an email</div>';
+    }
+    loadEmails();
+  } else {
+    showToast('Delete failed', 'error');
+  }
+}
+
+async function deleteCurrentEmail() {
+  if(currentEmail) {
+    await deleteEmail(currentEmail);
+  }
+}
+
+async function checkHealth() {
+  let container = document.getElementById('healthStatus');
+  container.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner"></div> Checking...</div>';
+  try {
+    let res = await fetch('/api/health');
+    let data = await res.json();
+    container.innerHTML = `
+      <div style="background:#f9fafb;border-radius:16px;padding:20px">
+        <div class="flex-between" style="margin-bottom:16px">
+          <span><span class="health-status ${data.status === 'healthy' ? 'health-online' : 'health-offline'}"></span> System: ${data.status || 'unknown'}</span>
+          <span>🕐 ${new Date(data.timestamp).toLocaleString()}</span>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+          <div class="item-card"><div class="value">${data.active_emails || 0}</div><div class="meta">Active Emails</div></div>
+          <div class="item-card"><div class="value">${data.recent_messages || 0}</div><div class="meta">Messages (Last Hour)</div></div>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#dc2626">Failed to fetch health status</div>';
+  }
+}
+
+async function loadNumbers() {
+  let grid = document.getElementById('numbersGrid');
+  grid.innerHTML = '<div style="text-align:center;padding:40px">Loading...</div>';
+  try {
+    let res = await fetch('/api/numbers');
+    let nums = await res.json();
+    if(!nums.length) { grid.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af">No numbers</div>'; return; }
+    grid.innerHTML = nums.map(n => `<div class="item-card" onclick="selectNumber('${n.number}')"><div class="value">📞 ${n.number}</div><div class="meta">${n.country||'Global'}</div></div>`).join('');
+    let select = document.getElementById('selectedNumber');
+    select.innerHTML = '<option>Select a number</option>' + nums.map(n => `<option value="${n.number}">${n.number}</option>`).join('');
+  } catch(e) { grid.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">Failed</div>'; }
+}
+
+function selectNumber(num) {
+  document.getElementById('selectedNumber').value = num;
+  loadSMS(num);
+}
+
+async function loadSMS(num) {
+  let area = document.getElementById('smsArea');
+  area.innerHTML = '<div style="text-align:center;padding:40px">Loading...</div>';
+  try {
+    let res = await fetch(`/api/sms?number=${encodeURIComponent(num)}`);
+    let msgs = await res.json();
+    if(!msgs.length) { area.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af">No SMS yet</div>'; return; }
+    area.innerHTML = msgs.map(m => `<div class="message"><div class="from">📱 From: ${escapeHtml(m.from_number||'Unknown')}</div><div class="body">💬 ${escapeHtml(m.message)}</div><div class="time">🕐 ${new Date(m.received_at).toLocaleString()}</div></div>`).join('');
+  } catch(e) { area.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">Failed</div>'; }
+}
+
+function copyEmail() { if(currentEmail) { navigator.clipboard.writeText(currentEmail); showToast('Copied!','success'); } }
+function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m){ if(m=='&') return '&amp;'; if(m=='<') return '&lt;'; if(m=='>') return '&gt;'; return m;}); }
+
+document.getElementById('selectedNumber').addEventListener('change', (e) => { if(e.target.value && e.target.value !== 'Select a number') loadSMS(e.target.value); });
+
+loadEmails();
+setInterval(loadEmails, 30000);
+</script>
+</body>
+</html>
