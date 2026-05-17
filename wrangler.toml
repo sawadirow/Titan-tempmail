@@ -1,20 +1,20 @@
-name = "tempmail-titan"
+name = "titan-tempmail"
 main = "worker.js"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-05-17"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "tempmail_db"
-database_id = "YOUR_DATABASE_ID_HERE"
+database_id = "658427f1-27c2-46c7-8441-3c5756a88382"
 
 [triggers]
 crons = ["0 * * * *"]
-
-# Email routing - enable in Cloudflare dashboard
-# Go to Email -> Email Routing -> Catch-all -> Send to Worker
 
 [vars]
 DOMAIN = "tempmail.com"
 
 [env.production]
 vars = { DOMAIN = "tempmail.com" }
+
+[dev]
+vars = { DOMAIN = "tempmail.dev" }
